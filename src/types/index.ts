@@ -94,7 +94,23 @@ export interface ItemVersion {
   publisher?: string;
   publisherId?: string;
   changeLog?: string;
+  batchId?: string;
   createdAt: string;
+}
+
+export interface ReleaseBatch {
+  id: string;
+  batchNo: string;
+  name: string;
+  level: ItemLevel;
+  itemIds: string[];
+  itemCount: number;
+  noticeTitle: string;
+  noticeContent: string;
+  publisher: string;
+  publisherId: string;
+  publishTime: string;
+  status: 'publishing' | 'published';
 }
 
 export interface DashboardStats {
@@ -164,4 +180,20 @@ export interface Notice {
   publisher: string;
   publishTime: string;
   isImportant: boolean;
+  batchId?: string;
+}
+
+export type TraceActionType = 'create' | 'update' | 'submit' | 'review_pass' | 'review_reject' | 'countersign' | 'publish';
+
+export interface TraceRecord {
+  id: string;
+  itemId: string;
+  action: TraceActionType;
+  actionName: string;
+  operator: string;
+  operatorId: string;
+  department: string;
+  time: string;
+  remark?: string;
+  status?: string;
 }

@@ -1,4 +1,6 @@
+import { useNavigate } from 'react-router-dom';
 import { useDashboardStore } from '@/store/dashboardStore';
+import { useItemStore } from '@/store/itemStore';
 import StatusBadge from '@/components/StatusBadge';
 import {
   TrendingUp,
@@ -14,8 +16,18 @@ import {
 } from 'lucide-react';
 
 export default function Dashboard() {
+  const navigate = useNavigate();
+  const { setFiltersAndNavigate } = useItemStore();
   const { stats, levelProgress, departmentProgress, timeComparisons, recentNotices, warningItems } =
     useDashboardStore();
+
+  const handleDrillDown = (filters: { status?: string; level?: string; departmentId?: string }) => {
+    setFiltersAndNavigate({
+      status: filters.status,
+      level: filters.level,
+    });
+    navigate('/item-library');
+  };
 
   const statCards = [
     {
@@ -24,6 +36,7 @@ export default function Dashboard() {
       icon: FileText,
       color: 'primary',
       change: '+12',
+      filter: { status: 'all' },
     },
     {
       label: '编制中',
@@ -31,6 +44,7 @@ export default function Dashboard() {
       icon: Edit3,
       color: 'primary',
       change: '+5',
+      filter: { status: 'compiling' },
     },
     {
       label: '审校中',
@@ -38,6 +52,7 @@ export default function Dashboard() {
       icon: Clock,
       color: 'warning',
       change: '-2',
+      filter: { status: 'reviewing' },
     },
     {
       label: '已发布',
@@ -45,6 +60,7 @@ export default function Dashboard() {
       icon: CheckCircle,
       color: 'success',
       change: '+8',
+      filter: { status: 'published' },
     },
     {
       label: '已退回',
@@ -52,6 +68,7 @@ export default function Dashboard() {
       icon: AlertTriangle,
       color: 'danger',
       change: '+3',
+      filter: { status: 'rejected' },
     },
     {
       label: '时限预警',
@@ -59,6 +76,7 @@ export default function Dashboard() {
       icon: AlertCircle,
       color: 'warning',
       change: '+2',
+      filter: { status: 'all' },
     },
   ];
 
@@ -74,7 +92,6 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Page Title */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-800">督办看板</h1>
@@ -94,14 +111,17 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Stats Cards */}
       <div className="grid grid-cols-6 gap-4">
         {statCards.map((card) => {
           const Icon = card.icon;
           const colorClass = getColorClass(card.color);
           const isPositive = card.change.startsWith('+');
           return (
-            <div key={card.label} className="card p-5">
+            <div
+              key={card.label}
+              className="card p-5 cursor-pointer hover:shadow-card-hover transition-all"
+              onClick={() => handleDrillDown(card.filter)}
+            >
               <div className="flex items-start justify-between">
                 <div
                   className={`w-10 h-10 rounded ${colorClass.icon} flex items-center justify-center`}
@@ -118,16 +138,17 @@ export default function Dashboard() {
               </div>
               <div className="mt-4">
                 <div className="text-2xl font-semibold text-slate-800">{card.value}</div>
-                <div className="text-sm text-slate-500 mt-1">{card.label}</div>
+                <div className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+                  {card.label}
+                  <ChevronRight className="w-3 h-3 text-slate-400" />
+                </div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Main Content Grid */}
       <div className="grid grid-cols-3 gap-6">
-        {/* Level Progress */}
         <div className="card p-5">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-base font-semibold text-slate-800">层级进度</h3>
@@ -135,7 +156,11 @@ export default function Dashboard() {
           </div>
           <div className="space-y-5">
             {levelProgress.map((level) => (
-              <div key={level.level}>
+              <div
+                key={level.level}
+                className="cursor-pointer hover:bg-slate-50 -mx-2 px-2 py-1 rounded transition-colors"
+                onClick={() => handleDrillDown({ level: level.level })}
+              >
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <StatusBadge status={level.level} />
@@ -158,11 +183,13 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Time Comparison */}
         <div className="card p-5">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-base font-semibold text-slate-800">时限对比提醒</h3>
-            <button className="text-xs text-primary-600 hover:text-primary-700">
+            <button
+              className="text-xs text-primary-600 hover:text-primary-700"
+              onClick={() => handleDrillDown({ status: 'all' })}
+            >
               查看全部
             </button>
           </div>
@@ -179,6 +206,7 @@ export default function Dashboard() {
                 <div
                   key={item.itemId}
                   className="p-3 bg-slate-50 rounded hover:bg-slate-100 transition-colors cursor-pointer"
+                  onClick={() => handleDrillDown({ status: 'all' })}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-sm font-medium text-slate-700 truncate flex-1">
@@ -206,11 +234,13 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Recent Notices */}
         <div className="card p-5">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-base font-semibold text-slate-800">最新公告</h3>
-            <button className="text-xs text-primary-600 hover:text-primary-700">
+            <button
+              className="text-xs text-primary-600 hover:text-primary-700"
+              onClick={() => navigate('/version-release')}
+            >
               查看全部
             </button>
           </div>
@@ -219,6 +249,7 @@ export default function Dashboard() {
               <div
                 key={notice.id}
                 className="flex gap-3 pb-4 border-b border-slate-100 last:border-0 last:pb-0 cursor-pointer group"
+                onClick={() => navigate('/version-release')}
               >
                 <div className="flex-shrink-0">
                   <Bell className="w-5 h-5 text-primary-500 mt-0.5" />
@@ -244,9 +275,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Bottom Section */}
       <div className="grid grid-cols-3 gap-6">
-        {/* Department Progress */}
         <div className="card p-5 col-span-2">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-base font-semibold text-slate-800">部门编制进度</h3>
@@ -277,7 +306,11 @@ export default function Dashboard() {
                   const status =
                     dept.rate >= 80 ? 'success' : dept.rate >= 60 ? 'warning' : 'danger';
                   return (
-                    <tr key={dept.departmentId} className="border-b border-slate-100">
+                    <tr
+                      key={dept.departmentId}
+                      className="border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors"
+                      onClick={() => handleDrillDown({ status: 'all' })}
+                    >
                       <td className="py-3">
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-slate-400 w-5">{index + 1}</span>
@@ -325,7 +358,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Warning Items */}
         <div className="card p-5">
           <div className="flex items-center justify-between mb-5">
             <h3 className="text-base font-semibold text-slate-800">预警事项</h3>
@@ -335,11 +367,12 @@ export default function Dashboard() {
             {warningItems.map((item) => (
               <div
                 key={item.id}
-                className={`p-3 rounded border-l-4 ${
+                className={`p-3 rounded border-l-4 cursor-pointer hover:shadow-sm transition-all ${
                   item.level === 'danger'
                     ? 'bg-danger-50 border-danger-500'
                     : 'bg-warning-50 border-warning-500'
                 }`}
+                onClick={() => handleDrillDown({ status: 'all' })}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1 min-w-0">

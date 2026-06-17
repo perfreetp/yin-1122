@@ -22,11 +22,14 @@ export default function Review() {
   const { pendingReviews, reviewRecords, activeTab, setActiveTab, countersignRecords } = useReviewStore();
   const [searchKeyword, setSearchKeyword] = useState('');
 
+  const reviewedCount = reviewRecords.filter(r => r.result !== 'reject').length;
+  const returnedCount = reviewRecords.filter(r => r.result === 'reject').length;
+
   const tabs = [
     { id: 'pending', label: '待我审校', icon: Clock, count: pendingReviews.length },
-    { id: 'reviewed', label: '我已审校', icon: CheckSquare, count: 4 },
+    { id: 'reviewed', label: '我已审校', icon: CheckSquare, count: reviewedCount },
     { id: 'countersign', label: '会签流转', icon: Users, count: countersignRecords.length },
-    { id: 'returned', label: '已退回', icon: RotateCcw, count: 3 },
+    { id: 'returned', label: '已退回', icon: RotateCcw, count: returnedCount },
   ];
 
   const priorityMap: Record<string, { label: string; className: string }> = {

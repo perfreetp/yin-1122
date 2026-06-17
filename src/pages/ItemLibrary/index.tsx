@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useItemStore } from '@/store/itemStore';
 import StatusBadge from '@/components/StatusBadge';
+import type { TraceRecord } from '@/types';
 import {
   Plus,
   Search,
@@ -17,6 +18,15 @@ import {
   Download,
   Upload,
   Layers,
+  GitBranch,
+  X,
+  User,
+  Calendar,
+  CheckCircle2,
+  XCircle,
+  RefreshCw,
+  Send,
+  Rocket,
 } from 'lucide-react';
 
 export default function ItemLibrary() {
@@ -24,6 +34,7 @@ export default function ItemLibrary() {
   const {
     categories,
     getFilteredItems,
+    getTraceRecords,
     selectedCategoryId,
     setSelectedCategory,
     setSearchKeyword,
@@ -34,8 +45,11 @@ export default function ItemLibrary() {
     levelFilter,
   } = useItemStore();
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['cat-1', 'cat-2', 'cat-3']));
+  const [showTraceModal, setShowTraceModal] = useState(false);
+  const [traceItemId, setTraceItemId] = useState<string | null>(null);
 
   const items = getFilteredItems();
+  const traceRecords = traceItemId ? getTraceRecords(traceItemId) : [];
 
   const toggleCategory = (id: string) => {
     setExpandedCategories((prev) => {
@@ -54,6 +68,37 @@ export default function ItemLibrary() {
       setSelectedCategory(null);
     } else {
       setSelectedCategory(id);
+    }
+  };
+
+  const handleViewTrace = (itemId: string) => {
+    setTraceItemId(itemId);
+    setShowTraceModal(true);
+  };
+
+  const getTraceIcon = (action: TraceRecord['action']) => {
+    switch (action) {
+      case 'create': return <FileText className="w-4 h-4" />;
+      case 'update': return <Edit3 className="w-4 h-4" />;
+      case 'submit': return <Send className="w-4 h-4" />;
+      case 'review_pass': return <CheckCircle2 className="w-4 h-4" />;
+      case 'review_reject': return <XCircle className="w-4 h-4" />;
+      case 'countersign': return <RefreshCw className="w-4 h-4" />;
+      case 'publish': return <Rocket className="w-4 h-4" />;
+      default: return <GitBranch className="w-4 h-4" />;
+    }
+  };
+
+  const getTraceColor = (action: TraceRecord['action']) => {
+    switch (action) {
+      case 'create': return 'bg-slate-100 text-slate-600';
+      case 'update': return 'bg-info-100 text-info-600';
+      case 'submit': return 'bg-primary-100 text-primary-600';
+      case 'review_pass': return 'bg-success-100 text-success-600';
+      case 'review_reject': return 'bg-danger-100 text-danger-600';
+      case 'countersign': return 'bg-warning-100 text-warning-600';
+      case 'publish': return 'bg-success-100 text-success-600';
+      default: return 'bg-slate-100 text-slate-600';
     }
   };
 
@@ -109,9 +154,10 @@ export default function ItemLibrary() {
     });
   };
 
+  const traceItem = traceItemId ? items.find(i => i.id === traceItemId) : null;
+
   return (
     <div className="h-full flex gap-6 -m-6 p-6">
-      {/* 左侧分类树 */}
       <div className="w-64 flex-shrink-0">
         <div className="card h-full flex flex-col">
           <div className="p-4 border-b border-slate-200">
@@ -123,9 +169,7 @@ export default function ItemLibrary() {
         </div>
       </div>
 
-      {/* 右侧内容区 */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* 顶部操作栏 */}
         <div className="card p-4 mb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -183,7 +227,6 @@ export default function ItemLibrary() {
           </div>
         </div>
 
-        {/* 统计条 */}
         <div className="flex items-center gap-4 mb-4">
           <span className="text-sm text-slate-500">
             共 <span className="text-slate-800 font-medium">{items.length}</span> 条事项
@@ -204,7 +247,6 @@ export default function ItemLibrary() {
           </div>
         </div>
 
-        {/* 事项列表 */}
         <div className="card flex-1 overflow-hidden flex flex-col">
           <div className="flex-1 overflow-auto">
             <table className="table">
@@ -221,7 +263,7 @@ export default function ItemLibrary() {
                   <th className="w-28">法定时限</th>
                   <th className="w-28">承诺时限</th>
                   <th className="w-32">更新时间</th>
-                  <th className="w-24 text-right">操作</th>
+                  <th className="w-32 text-right">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -278,6 +320,13 @@ export default function ItemLibrary() {
                           <Edit3 className="w-4 h-4" />
                         </button>
                         <button
+                          className="p-1.5 text-slate-400 hover:text-info-600 hover:bg-info-50 rounded transition-colors"
+                          title="流转轨迹"
+                          onClick={() => handleViewTrace(item.id)}
+                        >
+                          <GitBranch className="w-4 h-4" />
+                        </button>
+                        <button
                           className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded transition-colors"
                           title="更多"
                         >
@@ -291,7 +340,6 @@ export default function ItemLibrary() {
             </table>
           </div>
 
-          {/* 分页 */}
           <div className="h-12 border-t border-slate-200 flex items-center justify-between px-4">
             <span className="text-xs text-slate-500">
               显示 1-{items.length} 条，共 {items.length} 条
@@ -320,6 +368,77 @@ export default function ItemLibrary() {
           </div>
         </div>
       </div>
+
+      {showTraceModal && traceItem && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl w-[600px] max-h-[80vh] overflow-auto">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between sticky top-0 bg-white z-10">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">流转轨迹</h2>
+                <p className="mt-1 text-sm text-slate-500">{traceItem.name}</p>
+              </div>
+              <button 
+                onClick={() => {
+                  setShowTraceModal(false);
+                  setTraceItemId(null);
+                }}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6">
+              {traceRecords.length > 0 ? (
+                <div className="relative">
+                  <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-slate-200" />
+                  {traceRecords.map((record, index) => (
+                    <div key={record.id} className="relative flex gap-4 pb-6 last:pb-0">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 z-10 ${getTraceColor(record.action)}`}>
+                        {getTraceIcon(record.action)}
+                      </div>
+                      <div className="flex-1 pt-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-slate-900">{record.actionName}</span>
+                          <span className="text-xs text-slate-400">{record.time}</span>
+                        </div>
+                        <div className="mt-1 flex items-center gap-3 text-xs text-slate-500">
+                          <span className="flex items-center gap-1">
+                            <User className="w-3 h-3" />
+                            {record.operator}
+                          </span>
+                          <span className="text-slate-300">·</span>
+                          <span>{record.department}</span>
+                        </div>
+                        {record.remark && (
+                          <div className="mt-2 p-3 bg-slate-50 rounded-lg text-sm text-slate-600">
+                            {record.remark}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="py-12 text-center text-slate-500">
+                  <GitBranch className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                  <p>暂无流转记录</p>
+                </div>
+              )}
+            </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end">
+              <button
+                onClick={() => {
+                  setShowTraceModal(false);
+                  setTraceItemId(null);
+                }}
+                className="btn-secondary"
+              >
+                关闭
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

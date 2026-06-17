@@ -1,4 +1,35 @@
-import type { ItemVersion, Notice } from '@/types';
+import type { ItemVersion, Notice, ReleaseBatch } from '@/types';
+
+export const releaseBatches: ReleaseBatch[] = [
+  {
+    id: 'batch-001',
+    batchNo: 'ZF-2025-06-001',
+    name: '2025年6月第一批省级事项发布',
+    level: 'provincial',
+    itemIds: ['item-001'],
+    itemCount: 1,
+    noticeTitle: '关于发布2025年第一批省级政务服务事项实施清单的公告',
+    noticeContent: '根据《政务服务事项管理办法》，现将2025年第一批省级政务服务事项实施清单予以发布，请各市、县参照执行。',
+    publisher: '省政务服务管理局',
+    publisherId: 'dept-gov',
+    publishTime: '2025-06-10 10:30',
+    status: 'published',
+  },
+  {
+    id: 'batch-002',
+    batchNo: 'ZF-2025-05-001',
+    name: '2025年5月市级事项优化发布',
+    level: 'municipal',
+    itemIds: ['item-005'],
+    itemCount: 1,
+    noticeTitle: '关于优化发布市级不动产登记等事项的公告',
+    noticeContent: '为进一步优化营商环境，现将我市不动产统一登记等事项优化后的实施清单予以发布。',
+    publisher: '市政务服务管理局',
+    publisherId: 'dept-gov-m',
+    publishTime: '2025-05-20 11:15',
+    status: 'published',
+  },
+];
 
 export const releaseVersions: ItemVersion[] = [
   {
@@ -11,6 +42,7 @@ export const releaseVersions: ItemVersion[] = [
     publisher: '省市场监管局 张三',
     publisherId: 'user-001',
     changeLog: '优化申请材料清单，补充电子证照共享说明；优化办理流程，压缩承诺时限至3个工作日',
+    batchId: 'batch-001',
     createdAt: '2025-06-10',
   },
   {
@@ -47,6 +79,7 @@ export const releaseVersions: ItemVersion[] = [
     publisher: '市自然资源和规划局 孙七',
     publisherId: 'user-005',
     changeLog: '优化办理流程，推行"一窗受理、并行办理"；压缩承诺时限至5个工作日',
+    batchId: 'batch-002',
     createdAt: '2025-05-20',
   },
   {
@@ -184,6 +217,7 @@ export const releaseNotices: Notice[] = [
     publisher: '省政务服务管理局',
     publishTime: '2025-06-15',
     isImportant: true,
+    batchId: 'batch-001',
   },
   {
     id: 'notice-002',
@@ -224,6 +258,7 @@ export const releaseNotices: Notice[] = [
     publisher: '市自然资源和规划局',
     publishTime: '2025-05-20',
     isImportant: false,
+    batchId: 'batch-002',
   },
   {
     id: 'notice-006',
@@ -242,4 +277,5 @@ export const releaseStats = {
   thisMonthPublished: 28,
   pendingRelease: 15,
   totalVersions: 678,
+  totalBatches: 12,
 };

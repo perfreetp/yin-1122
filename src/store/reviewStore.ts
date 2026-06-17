@@ -102,6 +102,7 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
     };
     set(state => ({
       reviewRecords: [...state.reviewRecords, newRecord],
+      pendingReviews: state.pendingReviews.filter(p => p.itemId !== record.itemId),
     }));
   },
 
@@ -131,8 +132,27 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       status: 'countersigning',
       steps,
     };
+    
+    const countersignRecord: ReviewRecord = {
+      id: `review-${Date.now() + 1}`,
+      itemId: record.itemId,
+      itemName: record.itemName,
+      version: 1,
+      reviewer: '当前用户',
+      reviewerId: 'current-user',
+      department: '省政务服务管理局',
+      departmentId: 'dept-gov',
+      opinion: record.countersignOpinion || '发起跨部门会签',
+      result: 'transfer',
+      reviewTime: new Date().toISOString().slice(0, 16).replace('T', ' '),
+      isCountersign: true,
+      sort: 1,
+    };
+
     set(state => ({
       countersignRecords: [...state.countersignRecords, newRecord],
+      pendingReviews: state.pendingReviews.filter(p => p.itemId !== record.itemId),
+      reviewRecords: [...state.reviewRecords, countersignRecord],
     }));
   },
 }));
