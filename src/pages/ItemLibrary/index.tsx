@@ -21,11 +21,19 @@ import {
 
 export default function ItemLibrary() {
   const navigate = useNavigate();
-  const { categories, getFilteredItems, selectedCategoryId, setSelectedCategory, setSearchKeyword, searchKeyword } =
-    useItemStore();
+  const {
+    categories,
+    getFilteredItems,
+    selectedCategoryId,
+    setSelectedCategory,
+    setSearchKeyword,
+    searchKeyword,
+    setStatusFilter,
+    setLevelFilter,
+    statusFilter,
+    levelFilter,
+  } = useItemStore();
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['cat-1', 'cat-2', 'cat-3']));
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [levelFilter, setLevelFilter] = useState('all');
 
   const items = getFilteredItems();
 
@@ -167,7 +175,7 @@ export default function ItemLibrary() {
                 <Download className="w-4 h-4 mr-1.5" />
                 导出
               </button>
-              <button className="btn-primary">
+              <button className="btn-primary" onClick={() => navigate('/compilation/new')}>
                 <Plus className="w-4 h-4 mr-1.5" />
                 新建事项
               </button>
@@ -228,7 +236,7 @@ export default function ItemLibrary() {
                     <td>
                       <div
                         className="font-medium text-slate-800 hover:text-primary-600 transition-colors"
-                        onClick={() => navigate(`/compilation/${item.id}`)}
+                        onClick={() => navigate(`/compilation/edit/${item.id}`)}
                       >
                         {item.name}
                       </div>
@@ -258,14 +266,14 @@ export default function ItemLibrary() {
                         <button
                           className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
                           title="查看"
-                          onClick={() => navigate(`/compilation/${item.id}`)}
+                          onClick={() => navigate(`/compilation/edit/${item.id}`)}
                         >
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
                           className="p-1.5 text-slate-400 hover:text-primary-600 hover:bg-primary-50 rounded transition-colors"
                           title="编辑"
-                          onClick={() => navigate(`/compilation/${item.id}`)}
+                          onClick={() => navigate(`/compilation/edit/${item.id}`)}
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>

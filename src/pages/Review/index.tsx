@@ -19,13 +19,13 @@ import {
 
 export default function Review() {
   const navigate = useNavigate();
-  const { pendingReviews, reviewRecords, activeTab, setActiveTab } = useReviewStore();
+  const { pendingReviews, reviewRecords, activeTab, setActiveTab, countersignRecords } = useReviewStore();
   const [searchKeyword, setSearchKeyword] = useState('');
 
   const tabs = [
     { id: 'pending', label: '待我审校', icon: Clock, count: pendingReviews.length },
     { id: 'reviewed', label: '我已审校', icon: CheckSquare, count: 4 },
-    { id: 'countersign', label: '会签流转', icon: Users, count: 2 },
+    { id: 'countersign', label: '会签流转', icon: Users, count: countersignRecords.length },
     { id: 'returned', label: '已退回', icon: RotateCcw, count: 3 },
   ];
 
@@ -235,12 +235,12 @@ export default function Review() {
       {/* 会签流转 */}
       {activeTab === 'countersign' && (
         <div className="grid grid-cols-2 gap-6">
-          {[1, 2].map((i) => (
-            <div key={i} className="card p-5">
+          {countersignRecords.map((record) => (
+            <div key={record.id} className="card p-5">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="font-medium text-slate-800">建设工程规划许可证核发</h3>
-                  <p className="text-xs text-slate-500 mt-1">XZXK-GC-002 · 省自然资源厅</p>
+                  <h3 className="font-medium text-slate-800">{record.itemName}</h3>
+                  <p className="text-xs text-slate-500 mt-1">{record.code} · {record.department}</p>
                 </div>
                 <StatusBadge status="reviewing" />
               </div>
@@ -253,12 +253,7 @@ export default function Review() {
 
               {/* 会签流程 */}
               <div className="space-y-3">
-                {[
-                  { dept: '省自然资源厅', status: 'done', time: '06-12 10:30', opinion: '同意' },
-                  { dept: '省住房和城乡建设厅', status: 'done', time: '06-13 15:20', opinion: '同意，需补充施工许可衔接说明' },
-                  { dept: '省生态环境厅', status: 'doing', time: '', opinion: '' },
-                  { dept: '省政务服务管理局', status: 'pending', time: '', opinion: '' },
-                ].map((step, idx) => (
+                {record.steps?.map((step, idx) => (
                   <div key={idx} className="flex items-start gap-3">
                     <div
                       className={`w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -305,15 +300,24 @@ export default function Review() {
               <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between">
                 <span className="text-xs text-slate-500">
                   <Calendar className="w-3.5 h-3.5 inline mr-1" />
-                  提交时间：2025-06-12 14:30
+                  提交时间：{record.submitTime}
                 </span>
-                <button className="btn-sm btn-primary">
+                <button
+                  className="btn-sm btn-primary"
+                  onClick={() => navigate(`/review/${record.itemId}`)}
+                >
                   办理会签
                   <ChevronRight className="w-3.5 h-3.5 ml-1" />
                 </button>
               </div>
             </div>
           ))}
+          {countersignRecords.length === 0 && (
+            <div className="col-span-2 py-12 text-center text-slate-500">
+              <Users className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+              <p>暂无可办理的会签事项</p>
+            </div>
+          )}
         </div>
       )}
 

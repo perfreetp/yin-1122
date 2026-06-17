@@ -18,6 +18,7 @@ export default function App() {
           <Route path="/item-library" element={<ItemLibrary />} />
           <Route path="/compilation" element={<Compilation />} />
           <Route path="/compilation/edit/:id" element={<ItemEdit />} />
+          <Route path="/compilation/new" element={<ItemEdit />} />
           <Route path="/review" element={<Review />} />
           <Route path="/review/:id" element={<ReviewDetail />} />
           <Route path="/version" element={<VersionRelease />} />

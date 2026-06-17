@@ -19,6 +19,7 @@ import {
   ArrowRight,
   Users,
   AlertCircle,
+  X,
 } from 'lucide-react';
 
 const sections = [
@@ -28,14 +29,28 @@ const sections = [
   { id: 'process', label: '办理流程', icon: GitBranch },
 ];
 
+const countersignDepartments = [
+  { id: 'dept-001', name: '省市场监督管理局', checked: false },
+  { id: 'dept-002', name: '省自然资源厅', checked: false },
+  { id: 'dept-003', name: '省卫生健康委员会', checked: false },
+  { id: 'dept-006', name: '省教育厅', checked: false },
+  { id: 'dept-007', name: '省公安厅', checked: false },
+  { id: 'dept-008', name: '省人力资源和社会保障厅', checked: false },
+  { id: 'dept-010', name: '省生态环境厅', checked: false },
+  { id: 'dept-011', name: '省住房和城乡建设厅', checked: false },
+];
+
 export default function ReviewDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getItemById, getMaterials, getConditions, getProcessSteps } = useItemStore();
-  const { getReviewRecordsByItem } = useReviewStore();
+  const { getItemById, getMaterials, getConditions, getProcessSteps, updateItemStatus } = useItemStore();
+  const { getReviewRecordsByItem, addReviewRecord, pendingReviews, addCountersignRecord } = useReviewStore();
   const [activeSection, setActiveSection] = useState('basic');
   const [reviewOpinion, setReviewOpinion] = useState('');
   const [showCountersign, setShowCountersign] = useState(false);
+  const [countersignModal, setCountersignModal] = useState(false);
+  const [selectedDepts, setSelectedDepts] = useState<string[]>([]);
+  const [countersignOpinion, setCountersignOpinion] = useState('');
 
   const item = getItemById(id || 'item-002');
   const materials = getMaterials(id || 'item-001');
@@ -46,6 +61,109 @@ export default function ReviewDetail() {
   if (!item) {
     return <div className="text-center py-20 text-slate-500">事项不存在</div>;
   }
+
+  const handleReviewPass = () => {
+    if (!reviewOpinion.trim()) {
+      alert('请填写审校意见');
+      return;
+    }
+    addReviewRecord({
+      itemId: item.id,
+      itemName: item.name,
+      version: item.version,
+      reviewer: '省政务服务管理局 审核员',
+      reviewerId: 'user-current',
+      department: '省政务服务管理局',
+      departmentId: 'dept-gov',
+      opinion: reviewOpinion,
+      result: 'pass',
+      reviewTime: new Date().toISOString().slice(0, 16).replace('T', ' '),
+    });
+    updateItemStatus(item.id, 'published');
+    alert('审校通过，事项状态已更新为已发布');
+    setReviewOpinion('');
+    navigate('/review');
+  };
+
+  const handleReviewReject = () => {
+    if (!reviewOpinion.trim()) {
+      alert('请填写退审意见');
+      return;
+    }
+    addReviewRecord({
+      itemId: item.id,
+      itemName: item.name,
+      version: item.version,
+      reviewer: '省政务服务管理局 审核员',
+      reviewerId: 'user-current',
+      department: '省政务服务管理局',
+      departmentId: 'dept-gov',
+      opinion: reviewOpinion,
+      result: 'reject',
+      reviewTime: new Date().toISOString().slice(0, 16).replace('T', ' '),
+    });
+    updateItemStatus(item.id, 'rejected');
+    alert('已退回修改，事项状态已更新为已退回');
+    setReviewOpinion('');
+    navigate('/review');
+  };
+
+  const handleInitiateCountersign = () => {
+    setCountersignModal(true);
+    setSelectedDepts([]);
+    setCountersignOpinion('');
+  };
+
+  const toggleDept = (deptId: string) => {
+    setSelectedDepts((prev) =>
+      prev.includes(deptId) ? prev.filter((d) => d !== deptId) : [...prev, deptId]
+    );
+  };
+
+  const confirmCountersign = () => {
+    if (selectedDepts.length === 0) {
+      alert('请选择会签部门');
+      return;
+    }
+    const deptNames = countersignDepartments
+      .filter((d) => selectedDepts.includes(d.id))
+      .map((d) => d.name)
+      .join('、');
+    
+    addCountersignRecord({
+      itemId: item.id,
+      itemName: item.name,
+      code: item.code,
+      department: item.department,
+      level: item.level,
+      submitter: item.updatedBy,
+      submitTime: new Date().toISOString().slice(0, 16).replace('T', ' '),
+      deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      priority: 'high',
+      currentStep: '会签流转',
+      nextReviewer: deptNames,
+      countersignDepts: selectedDepts,
+      countersignOpinion: countersignOpinion,
+    });
+
+    addReviewRecord({
+      itemId: item.id,
+      itemName: item.name,
+      version: item.version,
+      reviewer: '省政务服务管理局 审核员',
+      reviewerId: 'user-current',
+      department: '省政务服务管理局',
+      departmentId: 'dept-gov',
+      opinion: countersignOpinion || `发起会签，涉及部门：${deptNames}`,
+      result: 'transfer',
+      reviewTime: new Date().toISOString().slice(0, 16).replace('T', ' '),
+      isCountersign: true,
+    });
+
+    setCountersignModal(false);
+    setShowCountersign(true);
+    alert(`已发起会签，涉及 ${selectedDepts.length} 个部门：${deptNames}`);
+  };
 
   const getSectionContent = () => {
     switch (activeSection) {
@@ -232,16 +350,20 @@ export default function ReviewDetail() {
         <div className="flex items-center gap-2">
           <button
             className="btn-secondary btn-sm"
-            onClick={() => setShowCountersign(!showCountersign)}
+            onClick={handleInitiateCountersign}
           >
             <Users className="w-3.5 h-3.5 mr-1" />
             发起会签
           </button>
-          <button className="btn-sm" style={{ borderColor: '#dc2626', color: '#dc2626', background: '#fff' }}>
+          <button
+            className="btn-sm"
+            style={{ borderColor: '#dc2626', color: '#dc2626', background: '#fff' }}
+            onClick={handleReviewReject}
+          >
             <RotateCcw className="w-3.5 h-3.5 mr-1" />
             退回修改
           </button>
-          <button className="btn-success btn-sm">
+          <button className="btn-success btn-sm" onClick={handleReviewPass}>
             <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
             审校通过
           </button>
@@ -349,11 +471,11 @@ export default function ReviewDetail() {
                   </button>
                 </div>
                 <div className="flex items-center gap-2">
-                  <button className="btn-secondary btn-sm">
+                  <button className="btn-secondary btn-sm" onClick={handleReviewReject}>
                     <RotateCcw className="w-3.5 h-3.5 mr-1" />
                     退回修改
                   </button>
-                  <button className="btn-success btn-sm">
+                  <button className="btn-success btn-sm" onClick={handleReviewPass}>
                     <Send className="w-3.5 h-3.5 mr-1" />
                     通过提交
                   </button>
@@ -439,7 +561,7 @@ export default function ReviewDetail() {
           <div className="p-4 border-t border-slate-200">
             <button
               className="w-full btn-secondary text-sm"
-              onClick={() => navigate(`/compilation/${item.id}`)}
+              onClick={() => navigate(`/compilation/edit/${item.id}`)}
             >
               <ArrowRight className="w-4 h-4 mr-1.5" />
               查看编制页
@@ -447,6 +569,83 @@ export default function ReviewDetail() {
           </div>
         </div>
       </div>
+
+      {/* 会签部门选择弹窗 */}
+      {countersignModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl w-[500px] max-h-[80vh] overflow-auto">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-900">发起会签</h2>
+                <p className="mt-1 text-sm text-slate-500">请选择会签部门</p>
+              </div>
+              <button
+                onClick={() => setCountersignModal(false)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">选择会签部门</label>
+                <div className="space-y-2 max-h-60 overflow-auto border border-slate-200 rounded-lg p-2">
+                  {countersignDepartments.map((dept) => (
+                    <label
+                      key={dept.id}
+                      className="flex items-center gap-3 p-2 hover:bg-slate-50 rounded cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedDepts.includes(dept.id)}
+                        onChange={() => toggleDept(dept.id)}
+                        className="rounded border-slate-300 text-primary-600 focus:ring-primary-500"
+                      />
+                      <span className="text-sm text-slate-700">{dept.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2">会签说明（可选）</label>
+                <textarea
+                  value={countersignOpinion}
+                  onChange={(e) => setCountersignOpinion(e.target.value)}
+                  rows={3}
+                  placeholder="请输入会签说明..."
+                  className="input w-full resize-none"
+                />
+              </div>
+              <div className="bg-info-50 border border-info-200 rounded-lg p-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-5 h-5 text-info-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-info-800">会签提示</p>
+                    <p className="mt-1 text-xs text-info-700">
+                      已选择 {selectedDepts.length} 个部门，会签部门需在5个工作日内反馈意见。
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end gap-3">
+              <button
+                onClick={() => setCountersignModal(false)}
+                className="btn-secondary"
+              >
+                取消
+              </button>
+              <button
+                onClick={confirmCountersign}
+                disabled={selectedDepts.length === 0}
+                className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                确认发起
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

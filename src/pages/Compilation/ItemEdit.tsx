@@ -41,14 +41,37 @@ const validationItems = [
 export default function ItemEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { getItemById, getMaterials, getConditions, getProcessSteps } = useItemStore();
+  const { getItemById, getMaterials, getConditions, getProcessSteps, items } = useItemStore();
   const [activeStep, setActiveStep] = useState('basic');
   const [expandedMaterials, setExpandedMaterials] = useState<Set<string>>(new Set(['mat-003']));
 
-  const item = getItemById(id || 'item-001');
-  const materials = getMaterials(id || 'item-001');
-  const conditions = getConditions(id || 'item-001');
-  const processSteps = getProcessSteps(id || 'item-001');
+  const isNewItem = id === 'new';
+
+  const defaultItem = {
+    id: 'new',
+    name: '',
+    code: '',
+    category: '市场准入',
+    categoryId: 'cat-1-1',
+    level: 'provincial' as const,
+    department: '',
+    departmentId: '',
+    status: 'draft' as const,
+    legalTimeLimit: 20,
+    promisedTimeLimit: 10,
+    templateName: '',
+    standardSource: '',
+    createdAt: new Date().toISOString().split('T')[0],
+    updatedAt: new Date().toISOString().split('T')[0],
+    updatedBy: '当前用户',
+    version: 1,
+    completionProgress: 0,
+  };
+
+  const item = isNewItem ? defaultItem : getItemById(id || 'item-001');
+  const materials = isNewItem ? [] : getMaterials(id || 'item-001');
+  const conditions = isNewItem ? [] : getConditions(id || 'item-001');
+  const processSteps = isNewItem ? [] : getProcessSteps(id || 'item-001');
 
   if (!item) {
     return <div className="text-center py-20 text-slate-500">事项不存在</div>;
@@ -527,7 +550,9 @@ export default function ItemEdit() {
         </button>
         <div className="h-5 w-px bg-slate-200"></div>
         <div className="flex-1 min-w-0">
-          <h1 className="text-base font-semibold text-slate-800 truncate">{item.name}</h1>
+          <h1 className="text-base font-semibold text-slate-800 truncate">
+            {isNewItem ? '新建事项' : item.name || '新建事项'}
+          </h1>
         </div>
         <StatusBadge status={item.status} />
         <div className="h-5 w-px bg-slate-200"></div>

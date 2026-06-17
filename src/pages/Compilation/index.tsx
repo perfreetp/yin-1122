@@ -122,6 +122,7 @@ export default function Compilation() {
                     ? 'border-primary-300 bg-primary-50/50 hover:border-primary-500 hover:bg-primary-50'
                     : 'border-slate-200 bg-slate-50 hover:border-slate-400 hover:bg-slate-100'
                 }`}
+                onClick={() => action.label === '新建事项' && navigate('/compilation/new')}
               >
                 <div
                   className={`w-10 h-10 rounded-lg flex items-center justify-center mb-3 ${
@@ -160,7 +161,7 @@ export default function Compilation() {
                 <div
                   key={item.id}
                   className="p-4 hover:bg-slate-50 cursor-pointer transition-colors"
-                  onClick={() => navigate(`/compilation/${item.id}`)}
+                  onClick={() => navigate(`/compilation/edit/${item.id}`)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
@@ -213,7 +214,7 @@ export default function Compilation() {
                 <div
                   key={item.id}
                   className="p-4 hover:bg-slate-50 cursor-pointer transition-colors"
-                  onClick={() => navigate(`/compilation/${item.id}`)}
+                  onClick={() => navigate(`/compilation/edit/${item.id}`)}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1 min-w-0">
@@ -289,7 +290,7 @@ export default function Compilation() {
                   <td className="text-right">
                     <button
                       className="text-sm text-primary-600 hover:text-primary-700 font-medium"
-                      onClick={() => navigate(`/compilation/${item.id}`)}
+                      onClick={() => navigate(`/compilation/edit/${item.id}`)}
                     >
                       立即修改
                     </button>

@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { ItemVersion, Notice } from '@/types';
 import { releaseVersions, pendingReleaseItems, releaseNotices, releaseStats } from '@/data/release';
+import { useItemStore } from '@/store/itemStore';
+import { useDashboardStore } from '@/store/dashboardStore';
 
 interface ReleaseState {
   versions: ItemVersion[];
@@ -89,6 +91,19 @@ export const useReleaseStore = create<ReleaseState>((set, get) => ({
       createdAt: new Date().toISOString().split('T')[0],
     };
     
+    // 更新事项状态为已发布
+    useItemStore.getState().updateItemStatus(itemId, 'published');
+    
+    // 更新看板统计
+    useDashboardStore.setState((state) => ({
+      stats: {
+        ...state.stats,
+        publishedCount: state.stats.publishedCount + 1,
+        reviewingCount: Math.max(0, state.stats.reviewingCount - 1),
+        completionRate: Math.round(((state.stats.publishedCount + 1) / state.stats.totalItems) * 1000) / 10,
+      },
+    }));
+    
     set(state => ({
       versions: [newVersion, ...state.versions],
       pendingItems: state.pendingItems.filter(p => p.itemId !== itemId),
@@ -96,7 +111,7 @@ export const useReleaseStore = create<ReleaseState>((set, get) => ({
         ...state.stats,
         totalPublished: state.stats.totalPublished + 1,
         thisMonthPublished: state.stats.thisMonthPublished + 1,
-        pendingRelease: state.stats.pendingRelease - 1,
+        pendingRelease: Math.max(0, state.stats.pendingRelease - 1),
         totalVersions: state.stats.totalVersions + 1,
       },
     }));
