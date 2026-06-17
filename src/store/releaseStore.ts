@@ -173,7 +173,7 @@ export const useReleaseStore = create<ReleaseState>((set, get) => ({
   },
 
   publishItem: (itemId, changeLog) => {
-    const item = get().pendingItems.find(p => p.itemId === itemId);
+    const item = get().pendingItems.find(p => p.itemId === itemId && p.reviewStatus === 'passed');
     if (!item) return;
     
     const newVersion: ItemVersion = {
@@ -219,7 +219,7 @@ export const useReleaseStore = create<ReleaseState>((set, get) => ({
     if (selectedItemIds.length === 0 || !batchNo || !batchName || !noticeTitle || !noticeContent) return;
     
     const itemsToPublish = pendingItems.filter(p => 
-      selectedItemIds.includes(p.itemId) && (p.reviewStatus === 'passed' || p.reviewStatus === 'reviewing')
+      selectedItemIds.includes(p.itemId) && p.reviewStatus === 'passed'
     );
     if (itemsToPublish.length === 0) return;
     

@@ -145,10 +145,16 @@ export const useItemStore = create<ItemState>((set, get) => ({
       });
     }
 
+    const countersignRecords = useReviewStore.getState().countersignRecords.filter(c => c.itemId === itemId);
+    const countersignItemIds = new Set(countersignRecords.map(c => c.itemId));
+
     const reviewRecords = useReviewStore.getState().reviewRecords.filter(r => r.itemId === itemId);
     reviewRecords.forEach((record) => {
-      const action = record.result === 'pass' ? 'review_pass' : record.result === 'reject' ? 'review_reject' : 'countersign';
-      const actionName = record.result === 'pass' ? '审校通过' : record.result === 'reject' ? '退回修改' : '转交会签';
+      if (record.result === 'transfer' && countersignItemIds.has(record.itemId)) {
+        return;
+      }
+      const action = record.result === 'pass' ? 'review_pass' : 'review_reject';
+      const actionName = record.result === 'pass' ? '审校通过' : '退回修改';
       records.push({
         id: `trace-review-${record.id}`,
         itemId,
@@ -163,7 +169,6 @@ export const useItemStore = create<ItemState>((set, get) => ({
       });
     });
 
-    const countersignRecords = useReviewStore.getState().countersignRecords.filter(c => c.itemId === itemId);
     countersignRecords.forEach((record) => {
       records.push({
         id: `trace-cs-${record.id}`,
@@ -209,6 +214,13 @@ export const useItemStore = create<ItemState>((set, get) => ({
   },
 
   setFiltersAndNavigate: (filters: { status?: string; level?: string; categoryId?: string; keyword?: string; departmentId?: string }) => {
+    set({
+      statusFilter: 'all',
+      levelFilter: 'all',
+      departmentFilter: 'all',
+      selectedCategoryId: null,
+      searchKeyword: '',
+    });
     if (filters.status !== undefined) get().setStatusFilter(filters.status);
     if (filters.level !== undefined) get().setLevelFilter(filters.level);
     if (filters.categoryId !== undefined) get().setSelectedCategory(filters.categoryId);

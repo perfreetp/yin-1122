@@ -79,7 +79,7 @@ export default function VersionRelease() {
   const publishedVersions = getPublishedVersions();
   const notices = getFilteredNotices();
   const batches = getBatches();
-  const passedItems = pendingItems.filter(p => p.reviewStatus === 'passed' || p.reviewStatus === 'reviewing');
+  const passedItems = pendingItems.filter(p => p.reviewStatus === 'passed');
   const reviewableItems = passedItems;
 
   useEffect(() => {
@@ -480,7 +480,7 @@ export default function VersionRelease() {
                   {passedItems.map((item) => {
                     const itemInfo = getItemInfo(item.itemId);
                     const isSelected = selectedItemIds.includes(item.itemId);
-                    const canSelect = item.reviewStatus === 'passed' || item.reviewStatus === 'reviewing';
+                    const canSelect = item.reviewStatus === 'passed';
                     return (
                       <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="py-3 px-4">
@@ -509,7 +509,7 @@ export default function VersionRelease() {
                         <td className="py-3 px-4 text-sm text-slate-600">{item.department}</td>
                         <td className="py-3 px-4 text-sm text-slate-600">v{item.version}</td>
                         <td className="py-3 px-4">
-                          <StatusBadge status={item.reviewStatus === 'passed' ? 'pending_release' : item.reviewStatus as any} />
+                          <StatusBadge status="pending_release" />
                         </td>
                         <td className="py-3 px-4 text-sm text-slate-600">{item.expectedPublishTime}</td>
                         <td className="py-3 px-4">

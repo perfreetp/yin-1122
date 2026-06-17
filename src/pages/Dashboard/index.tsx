@@ -18,15 +18,19 @@ import {
   User,
   Calendar,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { setFiltersAndNavigate } = useItemStore();
   const { setActiveTab, getNoticeById } = useReleaseStore();
-  const { stats, levelProgress, departmentProgress, timeComparisons, recentNotices, warningItems } =
+  const { timeComparisons, recentNotices, warningItems, getComputedStats, getComputedLevelProgress, getComputedDepartmentProgress } =
     useDashboardStore();
   const [showNoticeModal, setShowNoticeModal] = useState<string | null>(null);
+
+  const stats = useMemo(() => getComputedStats(), [getComputedStats]);
+  const levelProgress = useMemo(() => getComputedLevelProgress(), [getComputedLevelProgress]);
+  const departmentProgress = useMemo(() => getComputedDepartmentProgress(), [getComputedDepartmentProgress]);
 
   const handleDrillDown = (filters: { status?: string; level?: string; departmentId?: string }) => {
     setFiltersAndNavigate({
@@ -54,7 +58,7 @@ export default function Dashboard() {
       value: stats.totalItems,
       icon: FileText,
       color: 'primary',
-      change: '+12',
+      change: '',
       filter: { status: 'all' },
     },
     {
@@ -62,7 +66,7 @@ export default function Dashboard() {
       value: stats.compilingCount,
       icon: Edit3,
       color: 'primary',
-      change: '+5',
+      change: '',
       filter: { status: 'compiling' },
     },
     {
@@ -70,7 +74,7 @@ export default function Dashboard() {
       value: stats.reviewingCount,
       icon: Clock,
       color: 'warning',
-      change: '-2',
+      change: '',
       filter: { status: 'reviewing' },
     },
     {
@@ -78,7 +82,7 @@ export default function Dashboard() {
       value: stats.publishedCount,
       icon: CheckCircle,
       color: 'success',
-      change: '+8',
+      change: '',
       filter: { status: 'published' },
     },
     {
@@ -86,7 +90,7 @@ export default function Dashboard() {
       value: stats.rejectedCount,
       icon: AlertTriangle,
       color: 'danger',
-      change: '+3',
+      change: '',
       filter: { status: 'rejected' },
     },
     {
@@ -94,7 +98,7 @@ export default function Dashboard() {
       value: stats.timeWarningCount,
       icon: AlertCircle,
       color: 'warning',
-      change: '+2',
+      change: '',
       filter: { status: 'all' },
     },
   ];
@@ -147,13 +151,15 @@ export default function Dashboard() {
                 >
                   <Icon className="w-5 h-5 text-white" />
                 </div>
-                <span
-                  className={`text-xs font-medium ${
-                    isPositive ? 'text-success-600' : 'text-danger-600'
-                  }`}
-                >
-                  {card.change}
-                </span>
+                {card.change && (
+                  <span
+                    className={`text-xs font-medium ${
+                      isPositive ? 'text-success-600' : 'text-danger-600'
+                    }`}
+                  >
+                    {card.change}
+                  </span>
+                )}
               </div>
               <div className="mt-4">
                 <div className="text-2xl font-semibold text-slate-800">{card.value}</div>
