@@ -79,8 +79,7 @@ export default function ReviewDetail() {
       result: 'pass',
       reviewTime: new Date().toISOString().slice(0, 16).replace('T', ' '),
     });
-    updateItemStatus(item.id, 'published');
-    alert('审校通过，事项状态已更新为已发布');
+    alert('审校通过，事项已进入待发布列表');
     setReviewOpinion('');
     navigate('/review');
   };
@@ -102,8 +101,7 @@ export default function ReviewDetail() {
       result: 'reject',
       reviewTime: new Date().toISOString().slice(0, 16).replace('T', ' '),
     });
-    updateItemStatus(item.id, 'rejected');
-    alert('已退回修改，事项状态已更新为已退回');
+    alert('已退回修改');
     setReviewOpinion('');
     navigate('/review');
   };
@@ -144,20 +142,6 @@ export default function ReviewDetail() {
       nextReviewer: deptNames,
       countersignDepts: selectedDepts,
       countersignOpinion: countersignOpinion,
-    });
-
-    addReviewRecord({
-      itemId: item.id,
-      itemName: item.name,
-      version: item.version,
-      reviewer: '省政务服务管理局 审核员',
-      reviewerId: 'user-current',
-      department: '省政务服务管理局',
-      departmentId: 'dept-gov',
-      opinion: countersignOpinion || `发起会签，涉及部门：${deptNames}`,
-      result: 'transfer',
-      reviewTime: new Date().toISOString().slice(0, 16).replace('T', ' '),
-      isCountersign: true,
     });
 
     setCountersignModal(false);

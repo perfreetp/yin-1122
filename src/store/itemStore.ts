@@ -15,11 +15,13 @@ interface ItemState {
   searchKeyword: string;
   statusFilter: string;
   levelFilter: string;
+  departmentFilter: string;
   currentItem: ServiceItem | null;
   setSearchKeyword: (keyword: string) => void;
   setSelectedCategory: (id: string | null) => void;
   setStatusFilter: (status: string) => void;
   setLevelFilter: (level: string) => void;
+  setDepartmentFilter: (departmentId: string) => void;
   setCurrentItem: (item: ServiceItem | null) => void;
   getItemById: (id: string) => ServiceItem | undefined;
   getFilteredItems: () => ServiceItem[];
@@ -29,7 +31,7 @@ interface ItemState {
   getVersions: (itemId: string) => ItemVersion[];
   getTraceRecords: (itemId: string) => TraceRecord[];
   updateItemStatus: (itemId: string, status: ServiceItem['status']) => void;
-  setFiltersAndNavigate: (filters: { status?: string; level?: string; categoryId?: string; keyword?: string }) => void;
+  setFiltersAndNavigate: (filters: { status?: string; level?: string; categoryId?: string; keyword?: string; departmentId?: string }) => void;
 }
 
 export const useItemStore = create<ItemState>((set, get) => ({
@@ -43,12 +45,14 @@ export const useItemStore = create<ItemState>((set, get) => ({
   searchKeyword: '',
   statusFilter: 'all',
   levelFilter: 'all',
+  departmentFilter: 'all',
   currentItem: null,
 
   setSearchKeyword: (keyword) => set({ searchKeyword: keyword }),
   setSelectedCategory: (id) => set({ selectedCategoryId: id }),
   setStatusFilter: (status) => set({ statusFilter: status }),
   setLevelFilter: (level) => set({ levelFilter: level }),
+  setDepartmentFilter: (departmentId) => set({ departmentFilter: departmentId }),
   setCurrentItem: (item) => set({ currentItem: item }),
 
   getItemById: (id) => {
@@ -56,7 +60,7 @@ export const useItemStore = create<ItemState>((set, get) => ({
   },
 
   getFilteredItems: () => {
-    const { items, selectedCategoryId, searchKeyword, statusFilter, levelFilter, categories } = get();
+    const { items, selectedCategoryId, searchKeyword, statusFilter, levelFilter, departmentFilter, categories } = get();
     let filtered = [...items];
 
     if (selectedCategoryId) {
@@ -82,6 +86,10 @@ export const useItemStore = create<ItemState>((set, get) => ({
 
     if (levelFilter && levelFilter !== 'all') {
       filtered = filtered.filter(item => item.level === levelFilter);
+    }
+
+    if (departmentFilter && departmentFilter !== 'all') {
+      filtered = filtered.filter(item => item.departmentId === departmentFilter);
     }
 
     return filtered;
@@ -200,10 +208,11 @@ export const useItemStore = create<ItemState>((set, get) => ({
     }));
   },
 
-  setFiltersAndNavigate: (filters: { status?: string; level?: string; categoryId?: string; keyword?: string }) => {
+  setFiltersAndNavigate: (filters: { status?: string; level?: string; categoryId?: string; keyword?: string; departmentId?: string }) => {
     if (filters.status !== undefined) get().setStatusFilter(filters.status);
     if (filters.level !== undefined) get().setLevelFilter(filters.level);
     if (filters.categoryId !== undefined) get().setSelectedCategory(filters.categoryId);
     if (filters.keyword !== undefined) get().setSearchKeyword(filters.keyword);
+    if (filters.departmentId !== undefined) get().setDepartmentFilter(filters.departmentId);
   },
 }));

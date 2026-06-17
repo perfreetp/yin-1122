@@ -118,6 +118,10 @@ body {
     @apply badge bg-slate-100 text-slate-600 border border-slate-200;
   }
 
+  .badge-info {
+    @apply badge bg-info-50 text-info-700 border border-info-200;
+  }
+
   .sidebar-item {
     @apply flex items-center gap-3 px-4 py-2.5 text-sm text-slate-600 rounded cursor-pointer transition-all duration-200 hover:bg-slate-100 hover:text-slate-900;
   }

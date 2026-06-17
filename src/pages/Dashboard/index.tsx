@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useDashboardStore } from '@/store/dashboardStore';
 import { useItemStore } from '@/store/itemStore';
+import { useReleaseStore } from '@/store/releaseStore';
 import StatusBadge from '@/components/StatusBadge';
 import {
   TrendingUp,
@@ -13,21 +14,39 @@ import {
   Bell,
   AlertCircle,
   BarChart3,
+  X,
+  User,
+  Calendar,
 } from 'lucide-react';
+import { useState } from 'react';
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { setFiltersAndNavigate } = useItemStore();
+  const { setActiveTab, getNoticeById } = useReleaseStore();
   const { stats, levelProgress, departmentProgress, timeComparisons, recentNotices, warningItems } =
     useDashboardStore();
+  const [showNoticeModal, setShowNoticeModal] = useState<string | null>(null);
 
   const handleDrillDown = (filters: { status?: string; level?: string; departmentId?: string }) => {
     setFiltersAndNavigate({
       status: filters.status,
       level: filters.level,
+      departmentId: filters.departmentId,
     });
     navigate('/item-library');
   };
+
+  const handleOpenAllNotices = () => {
+    setActiveTab('notices');
+    navigate('/version-release');
+  };
+
+  const handleOpenNotice = (noticeId: string) => {
+    setShowNoticeModal(noticeId);
+  };
+
+  const noticeDetail = showNoticeModal ? getNoticeById(showNoticeModal) : null;
 
   const statCards = [
     {
@@ -239,7 +258,7 @@ export default function Dashboard() {
             <h3 className="text-base font-semibold text-slate-800">最新公告</h3>
             <button
               className="text-xs text-primary-600 hover:text-primary-700"
-              onClick={() => navigate('/version-release')}
+              onClick={handleOpenAllNotices}
             >
               查看全部
             </button>
@@ -249,7 +268,7 @@ export default function Dashboard() {
               <div
                 key={notice.id}
                 className="flex gap-3 pb-4 border-b border-slate-100 last:border-0 last:pb-0 cursor-pointer group"
-                onClick={() => navigate('/version-release')}
+                onClick={() => handleOpenNotice(notice.id)}
               >
                 <div className="flex-shrink-0">
                   <Bell className="w-5 h-5 text-primary-500 mt-0.5" />
@@ -309,7 +328,7 @@ export default function Dashboard() {
                     <tr
                       key={dept.departmentId}
                       className="border-b border-slate-100 cursor-pointer hover:bg-slate-50 transition-colors"
-                      onClick={() => handleDrillDown({ status: 'all' })}
+                      onClick={() => handleDrillDown({ departmentId: dept.departmentId })}
                     >
                       <td className="py-3">
                         <div className="flex items-center gap-2">
@@ -397,6 +416,58 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {noticeDetail && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl w-[600px] max-h-[80vh] overflow-auto">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <StatusBadge status={noticeDetail.type} />
+                  {noticeDetail.isImportant && (
+                    <span className="text-xs px-2 py-0.5 bg-danger-100 text-danger-700 rounded font-medium">
+                      重要
+                    </span>
+                  )}
+                </div>
+                <h2 className="text-lg font-semibold text-slate-900">{noticeDetail.title}</h2>
+              </div>
+              <button
+                onClick={() => setShowNoticeModal(null)}
+                className="text-slate-400 hover:text-slate-600"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div className="flex items-center gap-4 text-xs text-slate-500">
+                <span className="flex items-center gap-1">
+                  <User className="w-3.5 h-3.5" />
+                  {noticeDetail.publisher}
+                </span>
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-3.5 h-3.5" />
+                  {noticeDetail.publishTime}
+                </span>
+                <StatusBadge status={noticeDetail.level} />
+              </div>
+              <div className="pt-4 border-t border-slate-100">
+                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">
+                  {noticeDetail.content}
+                </p>
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-200 flex justify-end">
+              <button
+                onClick={() => setShowNoticeModal(null)}
+                className="btn-primary"
+              >
+                我已阅读
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

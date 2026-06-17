@@ -1,6 +1,6 @@
 export type ItemLevel = 'provincial' | 'municipal' | 'county';
 
-export type ItemStatus = 'draft' | 'compiling' | 'reviewing' | 'rejected' | 'published';
+export type ItemStatus = 'draft' | 'compiling' | 'reviewing' | 'rejected' | 'pending_release' | 'published';
 
 export type ReviewResult = 'pass' | 'reject' | 'transfer';
 

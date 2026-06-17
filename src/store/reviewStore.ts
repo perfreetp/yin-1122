@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 import type { ReviewRecord } from '@/types';
 import { reviewRecords, pendingReviews, validationRules, knowledgeArticles } from '@/data/review';
+import { useItemStore } from '@/store/itemStore';
+import { useReleaseStore } from '@/store/releaseStore';
 
 interface CountersignRecord {
   id: string;
@@ -100,6 +102,28 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       id: `review-${Date.now()}`,
       sort: newSort,
     };
+    
+    if (record.result === 'pass') {
+      useItemStore.getState().updateItemStatus(record.itemId, 'pending_release');
+      const item = useItemStore.getState().getItemById(record.itemId);
+      if (item) {
+        useReleaseStore.getState().addPendingItem({
+          id: `pending-rel-${Date.now()}`,
+          itemId: item.id,
+          itemName: item.name,
+          code: item.code,
+          department: item.department,
+          level: item.level,
+          version: item.version,
+          reviewStatus: 'passed',
+          submitTime: new Date().toISOString().slice(0, 16).replace('T', ' '),
+          expectedPublishTime: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        });
+      }
+    } else if (record.result === 'reject') {
+      useItemStore.getState().updateItemStatus(record.itemId, 'rejected');
+    }
+    
     set(state => ({
       reviewRecords: [...state.reviewRecords, newRecord],
       pendingReviews: state.pendingReviews.filter(p => p.itemId !== record.itemId),
@@ -132,27 +156,10 @@ export const useReviewStore = create<ReviewState>((set, get) => ({
       status: 'countersigning',
       steps,
     };
-    
-    const countersignRecord: ReviewRecord = {
-      id: `review-${Date.now() + 1}`,
-      itemId: record.itemId,
-      itemName: record.itemName,
-      version: 1,
-      reviewer: '当前用户',
-      reviewerId: 'current-user',
-      department: '省政务服务管理局',
-      departmentId: 'dept-gov',
-      opinion: record.countersignOpinion || '发起跨部门会签',
-      result: 'transfer',
-      reviewTime: new Date().toISOString().slice(0, 16).replace('T', ' '),
-      isCountersign: true,
-      sort: 1,
-    };
 
     set(state => ({
       countersignRecords: [...state.countersignRecords, newRecord],
       pendingReviews: state.pendingReviews.filter(p => p.itemId !== record.itemId),
-      reviewRecords: [...state.reviewRecords, countersignRecord],
     }));
   },
 }));

@@ -9,6 +9,7 @@ const statusMap: Record<string, { label: string; className: string }> = {
   compiling: { label: '编制中', className: 'badge-primary' },
   reviewing: { label: '审校中', className: 'badge-warning' },
   rejected: { label: '已退回', className: 'badge-danger' },
+  pending_release: { label: '待发布', className: 'badge-info' },
   published: { label: '已发布', className: 'badge-success' },
   archived: { label: '已归档', className: 'badge-slate' },
   pass: { label: '通过', className: 'badge-success' },

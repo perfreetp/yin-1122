@@ -33,6 +33,7 @@ export default function ItemLibrary() {
   const navigate = useNavigate();
   const {
     categories,
+    items,
     getFilteredItems,
     getTraceRecords,
     selectedCategoryId,
@@ -41,15 +42,19 @@ export default function ItemLibrary() {
     searchKeyword,
     setStatusFilter,
     setLevelFilter,
+    setDepartmentFilter,
     statusFilter,
     levelFilter,
+    departmentFilter,
   } = useItemStore();
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set(['cat-1', 'cat-2', 'cat-3']));
   const [showTraceModal, setShowTraceModal] = useState(false);
   const [traceItemId, setTraceItemId] = useState<string | null>(null);
 
-  const items = getFilteredItems();
+  const filteredItems = getFilteredItems();
   const traceRecords = traceItemId ? getTraceRecords(traceItemId) : [];
+  
+  const allDepartments = Array.from(new Map(items.map(i => [i.departmentId, { id: i.departmentId, name: i.department }])).values());
 
   const toggleCategory = (id: string) => {
     setExpandedCategories((prev) => {
@@ -193,6 +198,7 @@ export default function ItemLibrary() {
                 <option value="compiling">编制中</option>
                 <option value="reviewing">审校中</option>
                 <option value="rejected">已退回</option>
+                <option value="pending_release">待发布</option>
                 <option value="published">已发布</option>
               </select>
               <select
@@ -204,6 +210,16 @@ export default function ItemLibrary() {
                 <option value="provincial">省级</option>
                 <option value="municipal">市级</option>
                 <option value="county">县级</option>
+              </select>
+              <select
+                className="select w-44"
+                value={departmentFilter}
+                onChange={(e) => setDepartmentFilter(e.target.value)}
+              >
+                <option value="all">全部部门</option>
+                {allDepartments.map(dept => (
+                  <option key={dept.id} value={dept.id}>{dept.name}</option>
+                ))}
               </select>
               <button className="btn-ghost">
                 <Filter className="w-4 h-4 mr-1.5" />
@@ -229,7 +245,7 @@ export default function ItemLibrary() {
 
         <div className="flex items-center gap-4 mb-4">
           <span className="text-sm text-slate-500">
-            共 <span className="text-slate-800 font-medium">{items.length}</span> 条事项
+            共 <span className="text-slate-800 font-medium">{filteredItems.length}</span> 条事项
           </span>
           <div className="flex items-center gap-1">
             <button className="text-xs px-2 py-1 rounded bg-primary-50 text-primary-700 border border-primary-200">
@@ -267,7 +283,7 @@ export default function ItemLibrary() {
                 </tr>
               </thead>
               <tbody>
-                {items.map((item) => (
+                {filteredItems.map((item) => (
                   <tr key={item.id} className="cursor-pointer">
                     <td>
                       <input type="checkbox" className="rounded border-slate-300" />

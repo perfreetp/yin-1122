@@ -37,6 +37,8 @@ interface ReleaseState {
   getBatches: () => ReleaseBatch[];
   getBatchById: (batchId: string) => ReleaseBatch | undefined;
   getVersionsByBatch: (batchId: string) => ItemVersion[];
+  getNoticeById: (noticeId: string) => Notice | undefined;
+  addPendingItem: (item: typeof pendingReleaseItems[0]) => void;
   publishItem: (itemId: string, changeLog: string) => void;
   publishBatch: () => void;
   generateBatchNo: () => string;
@@ -79,6 +81,25 @@ export const useReleaseStore = create<ReleaseState>((set, get) => ({
           : [...state.selectedItemIds, itemId]
       };
     });
+  },
+
+  addPendingItem: (item) => {
+    set(state => {
+      if (state.pendingItems.some(p => p.itemId === item.itemId)) {
+        return state;
+      }
+      return {
+        pendingItems: [...state.pendingItems, item],
+        stats: {
+          ...state.stats,
+          pendingRelease: state.stats.pendingRelease + 1,
+        },
+      };
+    });
+  },
+
+  getNoticeById: (noticeId) => {
+    return get().notices.find(n => n.id === noticeId);
   },
 
   generateBatchNo: () => {
@@ -197,18 +218,21 @@ export const useReleaseStore = create<ReleaseState>((set, get) => ({
     const { selectedItemIds, batchNo, batchName, noticeTitle, noticeContent, pendingItems } = get();
     if (selectedItemIds.length === 0 || !batchNo || !batchName || !noticeTitle || !noticeContent) return;
     
-    const itemsToPublish = pendingItems.filter(p => selectedItemIds.includes(p.itemId));
+    const itemsToPublish = pendingItems.filter(p => 
+      selectedItemIds.includes(p.itemId) && (p.reviewStatus === 'passed' || p.reviewStatus === 'reviewing')
+    );
     if (itemsToPublish.length === 0) return;
     
     const publishTime = new Date().toISOString().slice(0, 16).replace('T', ' ');
+    const batchId = `batch-${Date.now()}`;
     
     const newBatch: ReleaseBatch = {
-      id: `batch-${Date.now()}`,
+      id: batchId,
       batchNo,
       name: batchName,
       level: itemsToPublish[0].level as 'provincial' | 'municipal' | 'county',
-      itemIds: selectedItemIds,
-      itemCount: selectedItemIds.length,
+      itemIds: itemsToPublish.map(i => i.itemId),
+      itemCount: itemsToPublish.length,
       noticeTitle,
       noticeContent,
       publisher: '当前用户',
@@ -226,7 +250,7 @@ export const useReleaseStore = create<ReleaseState>((set, get) => ({
       publisher: '省政务服务管理局',
       publishTime: publishTime.split(' ')[0],
       isImportant: true,
-      batchId: newBatch.id,
+      batchId: batchId,
     };
     
     const newVersions: ItemVersion[] = itemsToPublish.map(item => ({
@@ -238,8 +262,8 @@ export const useReleaseStore = create<ReleaseState>((set, get) => ({
       publishTime,
       publisher: '当前用户',
       publisherId: 'current-user',
-      changeLog: `批次发布：${batchName}`,
-      batchId: newBatch.id,
+      changeLog: `批次发布：${batchName}（${batchNo}）`,
+      batchId: batchId,
       createdAt: new Date().toISOString().split('T')[0],
     }));
     
@@ -250,17 +274,18 @@ export const useReleaseStore = create<ReleaseState>((set, get) => ({
     useDashboardStore.setState((state) => ({
       stats: {
         ...state.stats,
-        publishedCount: state.stats.publishedCount + selectedItemIds.length,
-        reviewingCount: Math.max(0, state.stats.reviewingCount - selectedItemIds.length),
-        completionRate: Math.round(((state.stats.publishedCount + selectedItemIds.length) / state.stats.totalItems) * 1000) / 10,
+        publishedCount: state.stats.publishedCount + itemsToPublish.length,
+        completionRate: Math.round(((state.stats.publishedCount + itemsToPublish.length) / state.stats.totalItems) * 1000) / 10,
       },
     }));
+    
+    const publishedItemIds = itemsToPublish.map(i => i.itemId);
     
     set(state => ({
       batches: [newBatch, ...state.batches],
       versions: [...newVersions, ...state.versions],
       notices: [newNotice, ...state.notices],
-      pendingItems: state.pendingItems.filter(p => !selectedItemIds.includes(p.itemId)),
+      pendingItems: state.pendingItems.filter(p => !publishedItemIds.includes(p.itemId)),
       selectedItemIds: [],
       showBatchModal: false,
       batchNo: '',
@@ -269,10 +294,10 @@ export const useReleaseStore = create<ReleaseState>((set, get) => ({
       noticeContent: '',
       stats: {
         ...state.stats,
-        totalPublished: state.stats.totalPublished + selectedItemIds.length,
-        thisMonthPublished: state.stats.thisMonthPublished + selectedItemIds.length,
-        pendingRelease: Math.max(0, state.stats.pendingRelease - selectedItemIds.length),
-        totalVersions: state.stats.totalVersions + selectedItemIds.length,
+        totalPublished: state.stats.totalPublished + itemsToPublish.length,
+        thisMonthPublished: state.stats.thisMonthPublished + itemsToPublish.length,
+        pendingRelease: Math.max(0, state.stats.pendingRelease - itemsToPublish.length),
+        totalVersions: state.stats.totalVersions + itemsToPublish.length,
         totalBatches: state.stats.totalBatches + 1,
       },
     }));

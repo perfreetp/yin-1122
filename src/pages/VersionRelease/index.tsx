@@ -79,7 +79,8 @@ export default function VersionRelease() {
   const publishedVersions = getPublishedVersions();
   const notices = getFilteredNotices();
   const batches = getBatches();
-  const reviewableItems = pendingItems.filter(p => p.reviewStatus === 'reviewing');
+  const passedItems = pendingItems.filter(p => p.reviewStatus === 'passed' || p.reviewStatus === 'reviewing');
+  const reviewableItems = passedItems;
 
   useEffect(() => {
     if (showBatchModal && !batchNo) {
@@ -124,10 +125,10 @@ export default function VersionRelease() {
   };
 
   const toggleSelectAll = () => {
-    if (selectedItemIds.length === reviewableItems.length) {
+    if (selectedItemIds.length === passedItems.length) {
       setSelectedItemIds([]);
     } else {
-      setSelectedItemIds(reviewableItems.map(p => p.itemId));
+      setSelectedItemIds(passedItems.map(p => p.itemId));
     }
   };
 
@@ -455,9 +456,9 @@ export default function VersionRelease() {
                 <thead>
                   <tr className="border-b border-slate-200">
                     <th className="w-12 py-3 px-4">
-                      {reviewableItems.length > 0 && (
+                      {passedItems.length > 0 && (
                         <button onClick={toggleSelectAll} className="text-slate-400 hover:text-primary-600">
-                          {selectedItemIds.length === reviewableItems.length ? (
+                          {selectedItemIds.length === passedItems.length ? (
                             <CheckSquare className="w-5 h-5 text-primary-600" />
                           ) : (
                             <Square className="w-5 h-5" />
@@ -476,10 +477,10 @@ export default function VersionRelease() {
                   </tr>
                 </thead>
                 <tbody>
-                  {pendingItems.map((item) => {
+                  {passedItems.map((item) => {
                     const itemInfo = getItemInfo(item.itemId);
                     const isSelected = selectedItemIds.includes(item.itemId);
-                    const canSelect = item.reviewStatus === 'reviewing';
+                    const canSelect = item.reviewStatus === 'passed' || item.reviewStatus === 'reviewing';
                     return (
                       <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
                         <td className="py-3 px-4">
@@ -508,11 +509,11 @@ export default function VersionRelease() {
                         <td className="py-3 px-4 text-sm text-slate-600">{item.department}</td>
                         <td className="py-3 px-4 text-sm text-slate-600">v{item.version}</td>
                         <td className="py-3 px-4">
-                          <StatusBadge status={item.reviewStatus as any} />
+                          <StatusBadge status={item.reviewStatus === 'passed' ? 'pending_release' : item.reviewStatus as any} />
                         </td>
                         <td className="py-3 px-4 text-sm text-slate-600">{item.expectedPublishTime}</td>
                         <td className="py-3 px-4">
-                          {item.reviewStatus === 'reviewing' ? (
+                          {canSelect ? (
                             <button
                               onClick={() => handlePublish(item.itemId)}
                               className="text-primary-600 hover:text-primary-700 text-sm font-medium"
@@ -526,6 +527,14 @@ export default function VersionRelease() {
                       </tr>
                     );
                   })}
+                  {passedItems.length === 0 && (
+                    <tr>
+                      <td colSpan={9} className="py-12 text-center text-slate-500">
+                        <Clock className="w-12 h-12 mx-auto text-slate-300 mb-3" />
+                        <p>暂无待发布事项</p>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
@@ -696,7 +705,7 @@ export default function VersionRelease() {
                   已选事项 ({selectedItemIds.length})
                 </label>
                 <div className="max-h-32 overflow-y-auto border border-slate-200 rounded-lg divide-y divide-slate-100">
-                  {pendingItems
+                  {passedItems
                     .filter(p => selectedItemIds.includes(p.itemId))
                     .map(item => (
                       <div key={item.itemId} className="flex items-center justify-between p-2 text-sm">
